@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경기도 중등 임용 면접</title>
+    <link rel="stylesheet" href="/static/css/duolingo.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square-round.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="app-wrapper">
+        <header>
+            <h1>경기도 중등 임용고시 면접</h1>
+        </header>
+
+        <main>
+            <!-- Home: Central Buttons -->
+            <div id="home-view" class="view-section active">
+                <div style="flex: 1; display:flex; flex-direction:column; justify-content:center; width:100%;">
+                    <div style="text-align:center; margin-bottom:2rem;">
+                        <img src="/static/teacher_mascot.png" width="150" alt="teacher mascot">
+                        <p style="color:#777; margin-top:10px;">오늘도 합격을 향해!</p>
+                    </div>
+
+                    <button class="menu-btn primary" onclick="showSimStartData()">
+                        <span>실전 모의면접</span> <span>🚀</span>
+                    </button>
+                    <button class="menu-btn secondary" onclick="showHistory()">
+                        <span>연습기록</span> <span>📅</span>
+                    </button>
+
+                    <div style="display:flex; gap:10px;">
+                        <button class="menu-btn" style="flex:1; justify-content:center;" onclick="showQuestions('구상형')">
+                            <span style="font-size:0.9rem">구상형 문항관리</span>
+                        </button>
+                        <button class="menu-btn" style="flex:1; justify-content:center;" onclick="showQuestions('즉답형')">
+                            <span style="font-size:0.9rem">즉답형 문항관리</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation View -->
+            <div id="simulation-view" class="view-section">
+
+                <!-- 1. Planning Phase -->
+                <div id="sim-planning" class="phase-container">
+                    <div class="timer-box" id="planning-timer">15:00</div>
+                    <div class="scroll-container" id="planning-qs-list">
+                        <!-- 3 Questions will be injected here -->
+                    </div>
+                    <div class="bottom-controls">
+                        <button class="btn-large" onclick="finishPlanning()">구상 완료 (면접 시작)</button>
+                    </div>
+                </div>
+
+                <!-- 2. Interview Phase (Planning Output) -->
+                <div id="sim-interview-planning" class="phase-container">
+                    <h3 style="text-align:center; margin:10px 0;">구상형 답변</h3>
+                    <div class="scroll-container" id="interview-planning-list">
+                        <!-- Questions + Logic -->
+                    </div>
+                    <div class="bottom-controls">
+                        <button id="btn-start-immediate" class="btn-large disabled" onclick="startImmediatePhase()">즉답형
+                            면접 시작</button>
+                    </div>
+                </div>
+
+                <!-- 3. Interview Phase (Immediate) -->
+                <div id="sim-interview-immediate" class="phase-container">
+                    <h3 style="text-align:center; margin:10px 0;">즉답형 답변</h3>
+                    <div class="scroll-container" id="interview-immediate-list">
+                        <!-- Q1, Q2 Inject -->
+                    </div>
+                    <div class="bottom-controls">
+                        <button id="btn-finish-all" class="btn-large disabled" onclick="finishAll()">면접 종료</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- History View -->
+            <!-- History View -->
+            <div id="history-view" class="view-section">
+                <div class="nav-header">
+                    <button onclick="goHome()" class="btn-back">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                            <path d="M0 0h24v24H0z" fill="none" />
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+                                fill="currentColor" />
+                        </svg>
+                    </button>
+                    <h2 style="margin:0 0 0 10px;">연습 기록</h2>
+                </div>
+                <div id="history-list" class="scroll-container"></div>
+            </div>
+
+            <!-- Questions View -->
+            <div id="questions-view" class="view-section">
+                <div class="nav-header">
+                    <button onclick="goHome()" class="btn-back">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                            <path d="M0 0h24v24H0z" fill="none" />
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+                                fill="currentColor" />
+                        </svg>
+                    </button>
+                    <h2 id="q-view-title" style="margin:0 0 0 10px;">문항 관리</h2>
+                </div>
+
+                <!-- Excel Upload Area -->
+                <div
+                    style="background:#f0f8ff; padding:20px; border-radius:16px; margin-bottom:20px; text-align: left;">
+
+                    <p style="margin:0 0 10px 0; font-size:1rem; color:#333; font-weight:bold; text-align:center;">엑셀 파일
+                        등록 가이드</p>
+
+                    <!-- Guide Table -->
+                    <table class="guide-table">
+                        <thead>
+                            <tr>
+                                <th>A열 (문항명)</th>
+                                <th>B열 (문항내용)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>[2024 기출]</td>
+                                <td>다음 자료를 분석하여...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p style="margin:10px 0 15px 0; font-size:0.8rem; color:#666; text-align:center;">
+                        ※ 엑셀 파일의 첫 번째 행부터 바로 데이터를 입력해주세요.
+                    </p>
+
+                    <!-- Custom File Input -->
+                    <div class="file-upload-container">
+                        <input type="file" id="excel-upload" accept=".xlsx" hidden>
+                        <label for="excel-upload" id="file-label" class="menu-btn secondary"
+                            style="margin:0; text-align:center; justify-content:center; font-size:0.95rem;">
+                            📂 엑셀 파일 선택하기
+                        </label>
+                        <button onclick="uploadExcel()" class="menu-btn primary"
+                            style="margin-top:10px; width:100%; text-align:center; justify-content:center; font-size:0.95rem;">
+                            업로드 하기
+                        </button>
+                    </div>
+                </div>
+
+                <div class="scroll-container">
+                    <h3 style="margin:10px 0; color:#555; font-size:1rem;">등록된 문항 리스트</h3>
+                    <ul id="q-list-manage" style="padding-left:0; list-style:none;"></ul>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-start" class="modal-overlay">
+        <div class="modal">
+            <h3>면접을 시작할까요?</h3>
+            <p>15분 구상 시간이 먼저 시작됩니다.</p>
+            <div class="modal-buttons">
+                <button onclick="closeModal('modal-start')" class="menu-btn">취소</button>
+                <button onclick="startSimulationReal()" class="menu-btn primary">진행</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-plan-finish" class="modal-overlay">
+        <div class="modal">
+            <h3>구상 종료</h3>
+            <p>면접(녹음)을 시작하시겠습니까?</p>
+            <div class="modal-buttons">
+                <button onclick="closeModal('modal-plan-finish')" class="menu-btn">취소</button>
+                <button onclick="startInterviewReal()" class="menu-btn primary">진행</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-all-finish" class="modal-overlay">
+        <div class="modal">
+            <h3>면접 종료</h3>
+            <p>수고하셨습니다!<br>기록을 저장합니다.</p>
+            <div class="modal-buttons">
+                <button onclick="saveAndGoHistory()" class="menu-btn primary">결과 확인</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app_duo.js?v=2"></script>
+</body>
+
+</html>

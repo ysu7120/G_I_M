@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+
+# Data & Models
+model/
+model.zip
+*.db
+*.sqlite
+*.log
+result.txt
+test_audio.wav
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env

@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+websockets
+sqlalchemy
+faster-whisper
+numpy
+openpyxl
+jinja2
+python-multipart
