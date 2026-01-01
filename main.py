@@ -11,7 +11,7 @@ import openpyxl
 from io import BytesIO
 
 from models import SessionLocal, init_db, Question, PracticeLog
-from stt_service import stt_service
+# from stt_service import stt_service
 
 app = FastAPI(title="Gyeonggi Interview Practice")
 
@@ -117,50 +117,54 @@ async def upload_excel(category: str = "구상형", file: UploadFile = File(...)
     db.commit()
     return {"status": "ok", "count": count}
 
-# --- WebSocket STT (Same VAD Logic) ---
-SILENCE_THRESHOLD = 0.02
-SAMPLE_RATE = 16000
-MIN_CHUNK_DURATION = 1.0 
-MAX_CHUNK_DURATION = 5.0
-SILENCE_DURATION_CHUNKS = 10
-BYTES_PER_SAMPLE = 2
-MIN_BYTES = int(SAMPLE_RATE * MIN_CHUNK_DURATION * BYTES_PER_SAMPLE)
-MAX_BYTES = int(SAMPLE_RATE * MAX_CHUNK_DURATION * BYTES_PER_SAMPLE)
-
-@app.websocket("/ws/stt")
-async def websocket_stt(websocket: WebSocket):
-    await websocket.accept()
-    buffer = bytearray()
-    silence_counter = 0
-    loop = asyncio.get_running_loop()
-    
-    try:
-        while True:
-            message = await websocket.receive_bytes()
-            buffer.extend(message)
-
-            chunk_np = np.frombuffer(message, dtype=np.int16).flatten().astype(np.float32) / 32768.0
-            energy = np.sqrt(np.mean(chunk_np**2))
-
-            if energy < SILENCE_THRESHOLD:
-                silence_counter += 1
-            else:
-                silence_counter = 0
-
-            buffer_len = len(buffer)
-            is_end_of_speech = (buffer_len >= MIN_BYTES) and (silence_counter > SILENCE_DURATION_CHUNKS)
-            is_buffer_full = (buffer_len >= MAX_BYTES)
-
-            if is_end_of_speech or is_buffer_full:
-                full_audio = bytes(buffer)
-                buffer.clear()
-                silence_counter = 0
-
-                text = await stt_service.transcribe_audio(loop, full_audio)
-                if text.strip():
-                    await websocket.send_json({"text": text})
-
-    except WebSocketDisconnect:
-        pass
-    except Exception as e:
-        print(f"WS Error: {e}")
+# from stt_service import stt_service
+# 
+# ...
+# 
+# # --- WebSocket STT (Commented Out for Web Speech API) ---
+# # SILENCE_THRESHOLD = 0.02
+# # SAMPLE_RATE = 16000
+# # MIN_CHUNK_DURATION = 1.0 
+# # MAX_CHUNK_DURATION = 5.0
+# # SILENCE_DURATION_CHUNKS = 10
+# # BYTES_PER_SAMPLE = 2
+# # MIN_BYTES = int(SAMPLE_RATE * MIN_CHUNK_DURATION * BYTES_PER_SAMPLE)
+# # MAX_BYTES = int(SAMPLE_RATE * MAX_CHUNK_DURATION * BYTES_PER_SAMPLE)
+# # 
+# # @app.websocket("/ws/stt")
+# # async def websocket_stt(websocket: WebSocket):
+# #     await websocket.accept()
+# #     buffer = bytearray()
+# #     silence_counter = 0
+# #     loop = asyncio.get_running_loop()
+# #     
+# #     try:
+# #         while True:
+# #             message = await websocket.receive_bytes()
+# #             buffer.extend(message)
+# # 
+# #             chunk_np = np.frombuffer(message, dtype=np.int16).flatten().astype(np.float32) / 32768.0
+# #             energy = np.sqrt(np.mean(chunk_np**2))
+# # 
+# #             if energy < SILENCE_THRESHOLD:
+# #                 silence_counter += 1
+# #             else:
+# #                 silence_counter = 0
+# # 
+# #             buffer_len = len(buffer)
+# #             is_end_of_speech = (buffer_len >= MIN_BYTES) and (silence_counter > SILENCE_DURATION_CHUNKS)
+# #             is_buffer_full = (buffer_len >= MAX_BYTES)
+# # 
+# #             if is_end_of_speech or is_buffer_full:
+# #                 full_audio = bytes(buffer)
+# #                 buffer.clear()
+# #                 silence_counter = 0
+# # 
+# #                 # text = await stt_service.transcribe_audio(loop, full_audio)
+# #                 # if text.strip():
+# #                 #     await websocket.send_json({"text": text})
+# # 
+# #     except WebSocketDisconnect:
+# #         pass
+# #     except Exception as e:
+# #         print(f"WS Error: {e}")

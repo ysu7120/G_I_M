@@ -351,7 +351,7 @@ async function uploadExcel() {
     loadQuestions();
 }
 
-// --- Audio / TTS / STT Utils ---
+// --- Audio / TTS / STT Utils (Web Speech API) ---
 function playTTS(text, callback) {
     const msg = new SpeechSynthesisUtterance(text);
     msg.lang = 'ko-KR';
@@ -360,48 +360,81 @@ function playTTS(text, callback) {
     window.speechSynthesis.speak(msg);
 }
 
-async function initAudio() {
-    if (ws) return; // already connected
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    ws = new WebSocket(`${protocol}://${window.location.host}/ws/stt`);
+// Web Speech API Variables
+let recognition = null;
 
-    ws.onmessage = (e) => {
+async function initAudio() {
+    if (!('webkitSpeechRecognition' in window)) {
+        alert("이 브라우저는 음성 인식을 지원하지 않습니다. Chrome을 사용해주세요.");
+        return;
+    }
+
+    if (recognition) return; // Already initialized
+
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'ko-KR';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
         if (!window.currentTranscriptTarget || currentActiveQIndex === -1) return;
-        const data = JSON.parse(e.data);
+
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+            } else {
+                interimTranscript += event.results[i][0].transcript;
+            }
+        }
+
         const target = document.getElementById(window.currentTranscriptTarget);
 
-        // Append
+        // Clear placeholder if needed
         if (target.innerText.includes("대기 중") || target.innerText.includes("편하게 말씀")) {
             target.innerText = "";
         }
-        target.innerText += data.text + " ";
-        target.scrollTop = target.scrollHeight;
-    };
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioContext = new AudioContext({ sampleRate: 16000 });
-    const source = audioContext.createMediaStreamSource(stream);
-    const processor = audioContext.createScriptProcessor(4096, 1, 1);
+        // We only append final results to the session log logic, 
+        // but for display we show everything. 
+        // Note: Simple appending might duplicate text if not careful.
+        // For simplicity in this structure, we just append finals.
+        // Improved logic: update current block with interim, fix with final.
 
-    source.connect(processor);
-    processor.connect(audioContext.destination);
-
-    processor.onaudioprocess = (e) => {
-        if (ws.readyState !== WebSocket.OPEN) return;
-        const inputData = e.inputBuffer.getChannelData(0);
-        const buffer = new ArrayBuffer(inputData.length * 2);
-        const view = new DataView(buffer);
-        for (let i = 0; i < inputData.length; i++) {
-            let s = Math.max(-1, Math.min(1, inputData[i]));
-            view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        // Since we are appending blindly in the previous logic, let's stick to appending finals
+        if (finalTranscript) {
+            target.innerText += finalTranscript + " ";
+            target.scrollTop = target.scrollHeight;
         }
-        ws.send(buffer);
     };
+
+    recognition.onerror = (event) => {
+        console.error("Speech verification error", event.error);
+    };
+
+    // Auto-restart if it stops unexpectedly while we are in a recording phase
+    recognition.onend = () => {
+        console.log("Speech recognition ended.");
+        // If we are still in a recording state (e.g. currentActiveQIndex != -1), restart
+        // But for now, we start/stop manually or let it run continuously during the session.
+        // Let's rely on initAudio being called once.
+        if (currentActiveQIndex !== -1 && recognition) {
+            try { recognition.start(); } catch (e) { }
+        }
+    };
+
+    try {
+        recognition.start();
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 function stopAudio() {
-    if (ws) ws.close();
-    if (audioContext) audioContext.close();
-    ws = null;
-    audioContext = null;
+    if (recognition) {
+        recognition.stop();
+        recognition = null;
+    }
 }
