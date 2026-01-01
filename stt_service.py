@@ -3,7 +3,7 @@ import numpy as np
 import functools
 from faster_whisper import WhisperModel
 
-MODEL_SIZE = "base"
+MODEL_SIZE = "tiny"
 DEVICE = "cpu"
 COMPUTE_TYPE = "int8"
 
