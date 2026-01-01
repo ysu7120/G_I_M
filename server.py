@@ -12,7 +12,7 @@ HOST = "0.0.0.0"
 PORT = 8000
 
 # 모델 설정 (CPU 최적화)
-MODEL_SIZE = "base"      # tiny, base, small 중 선택
+MODEL_SIZE = "tiny"      # tiny, base, small 중 선택
 DEVICE = "cpu"
 COMPUTE_TYPE = "int8"    # CPU 사용 시 필수
 
